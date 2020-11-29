@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"snake-game/api/db"
 	"snake-game/api/model"
@@ -9,12 +10,18 @@ import (
 
 // PostUser to post a user in a DB
 func PostUser() http.HandlerFunc {
-	data := db.DBConnection()
+	data, err := db.DBConnection()
+	if err != nil {
+		log.Fatal("error connecting with DB", err)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := map[string]string{}
 		_ = json.NewDecoder(r.Body).Decode(&request)
 
-		users := db.GetUsersDB(data)
+		users, err := db.GetUsersDB(data)
+		if err != nil {
+			log.Fatal("error getting users from DB", err)
+		}
 		var info model.User
 
 		info.Username = request["username"]
@@ -33,8 +40,14 @@ func PostUser() http.HandlerFunc {
 			}
 		}
 
-		db.CreateUser(info, data)
+		_, err = db.CreateUser(info, data)
+		if err != nil {
+			log.Fatal("error creating a user", err)
+		}
 
-		_, _ = w.Write([]byte("Great job!!"))
+		_, err = w.Write([]byte("Great job!!"))
+		if err != nil {
+			log.Fatal("error with the request", err)
+		}
 	}
 }

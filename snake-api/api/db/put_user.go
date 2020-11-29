@@ -2,17 +2,21 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 	"snake-game/api/model"
 )
 
+var (
+	// ErrUpdatingUser to make an update of the score
+	ErrUpdatingUser = errors.New("error updating user score")
+)
+
 // PutUser to update the score of the user in the DB
-func PutUser(user model.User, db *sql.DB) bool {
+func PutUser(user model.User, db *sql.DB) (bool, error) {
 	if _, err := db.Exec(
 		"UPDATE user_tb SET score = ('" + user.Score + "') WHERE id = '" + user.UserID + "'"); err != nil {
-		fmt.Println("Error updating user score", err)
-		return false
+		return false, ErrUpdatingUser
 	}
 
-	return true
+	return true, nil
 }

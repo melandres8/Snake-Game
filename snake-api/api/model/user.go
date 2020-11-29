@@ -7,10 +7,10 @@ import (
 
 // User model
 type User struct {
-	UserID		string		`json:"user_id"`
-	Username	string		`json:"username"`
-	Score		string		`json:"score"`
-	CreatedAt	*time.Time	`json:"created_at"`
+	UserID    string    `json:"user_id"`
+	Username  string    `json:"username"`
+	Score     string    `json:"score"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // UserGame is an array of users

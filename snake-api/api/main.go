@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"log"
 	"net/http"
 	"snake-game/api/handlers"
 )
@@ -33,5 +34,8 @@ func main() {
 	route.Put("/users/{id}", handlers.PutUser())
 
 	fmt.Println("Serving on port" + port)
-	_ = http.ListenAndServe(port, route)
+	err := http.ListenAndServe(port, route)
+	if err != nil {
+		log.Fatal("An error occur", err)
+	}
 }
