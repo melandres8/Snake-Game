@@ -1,33 +1,28 @@
 package model
 
 import (
+	"encoding/json"
+	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
-func TestUserGame_Add(t *testing.T) {
-	usr := NewUser()
+func TestUserModel(t *testing.T) {
+	c := require.New(t)
 
-	usr.Add(User{
-		"12345",
-		"Melkin",
-		"500",
-		"12",
-	})
-	if len(usr.Users) != 1 {
-		t.Errorf("User was not added")
+	user := User{
+		UserID:    GenerateID(),
+		Username:  "testing",
+		Score:     "500",
+		CreatedAt: time.Time{},
 	}
-}
 
-func TestUserGame_GetAll(t *testing.T) {
-	usr := NewUser()
-	usr.Add(User{
-		"12345",
-		"Melkin",
-		"500",
-		"12"
-	})
-	messages := usr.GetAll()
-	if len(messages) != 1 {
-		t.Errorf("There is no messages here!")
-	}
+	var newUser User
+
+	response, err := json.Marshal(user)
+	c.NoError(err)
+
+	err = json.Unmarshal(response, &newUser)
+	c.NoError(err)
+	c.Equal(user, newUser)
 }
