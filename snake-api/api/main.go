@@ -17,7 +17,7 @@ func main() {
 	route.Use(middleware.Logger)
 	route.Use(middleware.Recoverer)
 
-	cors := cors.New(cors.Options{
+	newCors := cors.New(cors.Options{
 		AllowCredentials: true,
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS"},
@@ -25,7 +25,7 @@ func main() {
 		ExposedHeaders:   []string{"Link"},
 	})
 
-	route.Use(cors.Handler)
+	route.Use(newCors.Handler)
 	// Post a user
 	route.Post("/user", handlers.PostUser())
 	// Get users
@@ -36,6 +36,6 @@ func main() {
 	fmt.Println("Serving on port" + port)
 	err := http.ListenAndServe(port, route)
 	if err != nil {
-		log.Fatal("An error occur", err)
+		log.Fatal("An error occurred", err)
 	}
 }
