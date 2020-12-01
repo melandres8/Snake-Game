@@ -14,32 +14,28 @@ config = {
   }
 }
 
-let snake, cursors, food, appleRed, score = 0, userID = '';
-let scoreText, gameOverText, startAgain, userName = '', intervalApple;
-let timeRandom = Math.floor(Math.random() * (6000 - 1000)) + 1000;
-let UP = 0;
-let DOWN = 1;
-let LEFT = 2;
-let RIGHT = 3;
+let snake, cursors, gfood, rfood, score = 0, userID = '';
+let scoreText, gameOverText, startAgain, userName = '';
+const UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3;
 
 game = new Phaser.Game(config);
 
 function preload () {
-  this.load.image('food', './assets/gapple.png');
+  this.load.image('gfood', './assets/gapple.png');
   this.load.image('body', './assets/body.png');
-  this.load.image('red', './assets/rapple.png')
+  this.load.image('rfood', './assets/rapple.png')
   this.load.image('obtacle', './assets/bom.png')
 }
 
 function create() {
-  let Food = new Phaser.Class({
+  let gFood = new Phaser.Class({
     Extends: Phaser.GameObjects.Image,
     initialize:
 
-    function Food(scene, x, y) {
+    function gFood(scene, x, y) {
       Phaser.GameObjects.Image.call(this, scene);
 
-      this.setTexture('food');
+      this.setTexture('gfood');
       this.setPosition(x * 16, y * 16);
       this.setOrigin(0);
       this.total = 0;
@@ -47,9 +43,29 @@ function create() {
       scene.children.add(this);
     },
 
-    eat: function() {
+    geat: function() {
       this.total++;
     }
+  });
+
+  let rFood = new Phaser.Class({
+    Extends: Phaser.GameObjects.Image,
+    initialize:
+
+    function rFood(scene, x, y) {
+      Phaser.GameObjects.Image.call(this, scene);
+
+      this.setTexture('rfood');
+      this.setPosition(x * 16, y * 16);
+      this.setOrigin(0);
+      this.total = 0;
+
+      scene.children.add(this);
+    },
+
+    reat: function() {
+      this.total--;
+    },
   });
 
   let Snake = new Phaser.Class({
@@ -73,16 +89,6 @@ function create() {
       this.heading = RIGHT;
       this.direction = RIGHT;
     },
-
-    // randomApple: function() {
-    //   intervalApple = setInterval(function() {
-    //     appleRed.destroy();
-
-    //     let randomX = Math.floor(Math.random() * 40) * 16,
-    //     randomY = Math.floor(Math.random() * 30) * 16;
-    //     appleRed = this.add.sprite(randomX, randomY, 'red');
-    //   }, timeRandom);
-    // },
 
     update: function(time) {
       if (time >= this.moveTime) {
@@ -140,34 +146,37 @@ function create() {
         this.alive = false;
         gameOverText.visible = true;
 
-        fetch('http://localhost:8000/users', {mode: 'cors'})
-          .then(function(response) {
-            return response.json();
-          })
-          .then(function(text) {
-            userName = text[0].username;
-            userID = text[0].user_id
-            console.log('Request successful', userName, userID);
-
-            fetch('http://localhost:8000/users/' + userID, {
-              method: 'PUT',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({
-                  score: score.toString()
-              })
-            });
-          })
-          .catch(function(error) {
-            log('Request failed', error);
-          });
+        this.updateScore()
 
         return false;
       } else {
         // Updating the timer ready for the next movement
         this.moveTime = time + this.speed;
       }
-
       return true;
+    },
+
+    updateScore: function() {
+      fetch('http://localhost:8000/users', {mode: 'cors'})
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(text) {
+        userName = text[0].username;
+        userID = text[0].user_id
+        console.log('Request successful', userName, userID);
+
+        fetch('http://localhost:8000/users/' + userID, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            score: score.toString()
+          })
+        });
+      })
+      .catch(function(error) {
+        log('Request failed', error);
+      });
     },
 
     grow: function() {
@@ -176,19 +185,43 @@ function create() {
       large.setOrigin(0);
     },
 
-    getFood: function(food) {
-      if (this.head.x === food.x && this.head.y === food.y) {
+    getGreenFood: function(gfood) {
+      if (this.head.x === gfood.x && this.head.y === gfood.y) {
         this.grow();
-        food.eat();
+        gfood.geat();
 
         // For every multiple of 5 the speed is aumented
-        if (this.speed > 20 && food.total % 5 === 0) {
-          this.speed -= 5;
-          console.log(this.speed);
+        if (this.speed > 20 && gfood.total % 5 === 0) {
+          this.speed -= 10;
         }
 
         score += 5;
         scoreText.setText('Score: ' + score);
+        return true;
+      }
+      else {
+        return false;
+      }
+    },
+
+    getRedFood: function(rfood) {
+      if (this.head.x === rfood.x && this.head.y === rfood.y) {
+        rfood.reat();
+
+        // For every multiple of 5 the speed is aumented
+        if (this.speed > 20 && rfood.total % 5 === 0) {
+          this.speed -= 15;
+        }
+
+        score -= 10;
+        scoreText.setText('Score: ' + score);
+
+        if (score <= 0) {
+          this.alive = false;
+          gameOverText.visible = true;
+  
+          this.updateScore()
+        }
         return true;
       }
       else {
@@ -209,7 +242,8 @@ function create() {
   });
 
   snake = new Snake(this, 25, 25);
-  food = new Food(this, 3, 4);
+  gfood = new gFood(this, 3, 4);
+  rfood = new rFood(this, 12, 16);
 
   // Score
   textStyleScore = { font: "bold 20px sans-serif", fill: "white", align: "center" };
@@ -242,13 +276,16 @@ function update (time, delta) {
   }
 
   if (snake.update(time)) {
-    if (snake.getFood(food)) {
-      foodReposition();
+    if (snake.getGreenFood(gfood)) {
+      foodReposition(gfood);
+    }
+    else if (snake.getRedFood(rfood)) {
+      foodReposition(rfood);
     }
   }
 }
 
-function foodReposition() {
+function foodReposition(food) {
   let positions = []
 
   for (let y = 0; y < 50; y++) {
